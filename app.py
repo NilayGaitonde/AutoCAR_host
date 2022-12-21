@@ -50,7 +50,7 @@ def index():
             return redirect('/form')
 
         except:
-            return "Failed to Login"
+            return render_template('index.html', un = "Error Please Check Your Credentials")
             
 
     return render_template('index.html')
@@ -108,7 +108,7 @@ def mainPY(sal,fp):
         df = df.set_index('Products')
         return df
 
-    # Get's index of the word, essentially it gets the first index + the lenght so you have the last index of the phrase
+# Get's index of the word, essentially it gets the first index + the lenght so you have the last index of the phrase
     def get_index(firstIndex:int,string:str):
         return int(firstIndex)+int(len(string))
 
@@ -138,7 +138,6 @@ def mainPY(sal,fp):
 
     # generate the cases
     def getCases(top_up:int,case_df:dict,pivot:pd.DataFrame,new_pl:int):
-        
         # the global variable is used to store the recommendation string
         global recommendation_string
         tentative_string = []
@@ -170,54 +169,63 @@ def mainPY(sal,fp):
             else:
                 print("No recommendation")
         tentative_string = set(tentative_string)
-        recommendation_string+=" We recommend you use this to "+" ".join(tentative_string)+"."
+        if(len(tentative_string)>0):
+            recommendation_string+=" We recommend you use this to "+" ".join(tentative_string)+"."
+        else:
+            pass
         return case_df,balance
 
     # generate the cases if new pl is present, this is a different function because we need to check all the indices again and plus there was an error in the recommendation_string
     def get_newpl_cases(case_df, pivot, new_pl, balance):
-        global recommendation_string
-        tentative_string =[]
-        if(balance == 0):
-            try:
-                balance = pivot['Balance'].to_list()
-            except KeyError:
-                balance = 0
-                # if no balance is present then return the case_df and khatam bas boht hogya
-                return case_df
-        else:
-            pass
-        balance = [i for i in balance if i != 0]
-        # remove all those where balance is 0
-        if(len(balance) > 0):
-            for i in range(len(balance)):
-                productBalance = balance[i]
-                if(productBalance == 0):
-                    break
-                elif(new_pl == 0):
-                    break
-                elif(productBalance>new_pl):
-                    # REDUCE CONDITION WILL HAVE {REDUCE PRODUCT: OUTSTANDING PRODUCT VALUE}
-                    case_df['Sentence'].append(f'Outstanding {pivot.index[i]} balance')
-                    case_df['Value'].append(productBalance)
-                    case_df['Sentence'].append(f"Remaining {pivot.index[i]} balance")
-                    tentative_string.append(f", Reduce {pivot.index[i]}")
-                    balance[i] = productBalance - new_pl
-                    new_pl = 0
-                    case_df["Value"].append(productBalance-new_pl)
-                elif(productBalance<new_pl):
-                    # REMOVE CONDITION WILL HAVE {REMOVE PRODUCT: TOP UP VALUE}
-                    case_df['Sentence'].append(f"Outstanding {pivot.index[i]} balance")
-                    case_df['Value'].append(productBalance)
-                    case_df['Sentence'].append(f"Remaining New PL balance")
-                    tentative_string.append(f", Remove {pivot.index[i]}")
-                    new_pl = new_pl - productBalance
-                    balance[i] = 0
-                    case_df['Value'].append(new_pl)
+        try:
+            global recommendation_string
+            tentative_string =[]
+            if(balance == 0):
+                try:
+                    balance = pivot['Balance'].to_list()
+                except KeyError:
+                    balance = 0
+                    # if no balance is present then return the case_df and khatam bas boht hogya
+                    return case_df
+            else:
+                pass
+            balance = [i for i in balance if i != 0]
+            # remove all those where balance is 0
+            if(len(balance) > 0):
+                for i in range(len(balance)):
+                    productBalance = balance[i]
+                    if(productBalance == 0):
+                        break
+                    elif(new_pl == 0):
+                        break
+                    elif(productBalance>new_pl):
+                        # REDUCE CONDITION WILL HAVE {REDUCE PRODUCT: OUTSTANDING PRODUCT VALUE}
+                        case_df['Sentence'].append(f'Outstanding {pivot.index[i]} balance')
+                        case_df['Value'].append(productBalance)
+                        case_df['Sentence'].append(f"Remaining {pivot.index[i]} balance")
+                        tentative_string.append(f", Reduce {pivot.index[i]}")
+                        balance[i] = productBalance - new_pl
+                        new_pl = 0
+                        case_df["Value"].append(productBalance-new_pl)
+                    elif(productBalance<new_pl):
+                        # REMOVE CONDITION WILL HAVE {REMOVE PRODUCT: TOP UP VALUE}
+                        case_df['Sentence'].append(f"Outstanding {pivot.index[i]} balance")
+                        case_df['Value'].append(productBalance)
+                        case_df['Sentence'].append(f"Remaining New PL balance")
+                        tentative_string.append(f", Remove {pivot.index[i]}")
+                        new_pl = new_pl - productBalance
+                        balance[i] = 0
+                        case_df['Value'].append(new_pl)
+                    else:
+                        print("No recommendation")
+                tentative_string = set(tentative_string)
+                if(len(tentative_string)>0):
+                    recommendation_string+=" We recommend you use this to "+" ".join(tentative_string)+"."
                 else:
-                    print("No recommendation")
-            tentative_string = set(tentative_string)
-            recommendation_string+=" We recommend you use this to "+" ".join(tentative_string)+"."
-        else:
+                    pass
+            else:
+                pass
+        except IndexError:
             pass
         return case_df
 
@@ -277,7 +285,9 @@ def mainPY(sal,fp):
         products = [x for x in products if x == x]
         # check housing loan first then go up so reverse
         top_up_list.reverse()
-        if(len(top_up_list) > 0):
+        if(disposable<0):
+            pass
+        elif(len(top_up_list) > 0):
             if(len(products)>0):
                 recommendation_string+="You can get a top up on "+', '.join(products)+" based on the amount you have already paid for. "
             else:
@@ -335,11 +345,11 @@ def mainPY(sal,fp):
             info_df.to_csv(f'{filePath}/csv/{filename}_CAR_3.csv',index=False)
             rec_df.to_csv(f'{filePath}/csv/{filename}_CAR_4.csv',index=False)
         else:
-            try:
+            '''try:
                 os.mkdir(f'{filePath}/excel')
             except FileExistsError:
-                pass
-            with pd.ExcelWriter(f'{filePath}/excel/{filename}_CAR.xlsx') as writer:
+                pass'''
+            with pd.ExcelWriter(f'{filePath}/{filename}_CAR.xlsx') as writer:
                 data_df.to_excel(writer,sheet_name='All data',index=False)
                 pivot_df.to_excel(writer,sheet_name='Pivot data',index=True)
                 info_df.to_excel(writer,sheet_name='Info',index=False)
@@ -368,14 +378,8 @@ def mainPY(sal,fp):
                         case_2.to_excel(writer,sheet_name='Case 2',index=False)
                     else:
                         case_df.to_excel(writer,sheet_name='Case 1',index=False)
-                elif(disposable<0) and (delinquency==0):
-                    if len(case_df) > 3:
-                        case_1 = case_df.iloc[:3]
-                        case_2 = case_df.iloc[3:]
-                        case_1.to_excel(writer,sheet_name='Case 1',index=False)
-                        case_2.to_excel(writer,sheet_name='Case 2',index=False)
-                    else:
-                        case_df.to_excel(writer,sheet_name='Case 1',index=False)
+                elif(disposable<0):
+                    pass
                 else:
                     pass
     def create_loan(text:str):
@@ -393,46 +397,88 @@ def mainPY(sal,fp):
             text = text[accountNoIndex+1:]
             '''DELINQUENCIES COUNT'''
             delinquenciesIndex = get_index(text.find("Suit Filed Status:"),"Suit Filed Status:")
-            if(text[delinquenciesIndex+1].strip() == "H"):
-                delinquencyString = text[(delinquenciesIndex+len("HistoryAccount Status:Asset Classification:Suit Filed Status:")+4):(text.find("Acct # :"))]
-                # print(delinquencyString)
-                # Get all index of string "-22" is present in the delinquency string
-                index = [m.start() for m in re.finditer(month_year_regex,delinquencyString)]
-                if(len(index)>0):
-                    for indice in index:
-                        month_string = delinquencyString[indice:indice+5]
-                        try:
-                            input_month = datetime.datetime.strptime(month_string, "%m-%y")
-                        except ValueError:
-                            pass
-                        if(diff_month(today_date,input_month)<=7):
-                            print(input_month)
-                            six_months.append(indice)
-                        else:
-                            pass
-                    if(len(six_months)>0):
-                        delinquencyString = delinquencyString[six_months[0]:(six_months[-1]+2)]
-                        delinquenciesCount = (delinquencyString.count("+")+delinquencyString.count("CLSD")+delinquencyString.count("WOF")+delinquencyString.count("RCV"))
+            if(countAcc==1):
+                if(text[delinquenciesIndex+1].strip() == "H"):
+                    delinquencyString = text[(delinquenciesIndex+len("HistoryAccount Status:Asset Classification:Suit Filed Status:")+4):(text.find("Enquiry Summary:"))]
+                    # print(delinquencyString)
+                    # Get all index of string "-22" is present in the delinquency string
+                    index = [m.start() for m in re.finditer(month_year_regex,delinquencyString)]
+                    if(len(index)>0):
+                        for indice in index:
+                            month_string = delinquencyString[indice:indice+5]
+                            try:
+                                input_month = datetime.datetime.strptime(month_string, "%m-%y")
+                            except ValueError:
+                                pass
+                            if(diff_month(today_date,input_month)<=7):
+                                print(input_month)
+                                six_months.append(indice)
+                            else:
+                                pass
+                        if(len(six_months)>0):
+                            delinquencyString = delinquencyString[six_months[0]:(six_months[-1]+2)]
+                            delinquenciesCount = (delinquencyString.count("+")+delinquencyString.count("CLSD")+delinquencyString.count("WOF")+delinquencyString.count("RCV"))
+                else:
+                    delinquencyString = text[(delinquenciesIndex+len("Account Status:Asset Classification:Suit Filed Status:")+4):(text.find("Enquiry Summary:"))]
+            # print(delinquencyString)
+            # Get all index of string "-22" is present in the delinquency string
+                    index = [m.start() for m in re.finditer(month_year_regex,delinquencyString)]
+                    if(len(index)>0):
+                        for indice in index:
+                            month_string = delinquencyString[indice:indice+5]
+                            try:
+                                input_month = datetime.datetime.strptime(month_string, "%m-%y")
+                            except ValueError:
+                                pass
+                            if(diff_month(today_date,input_month)<=7):
+                                print(input_month)
+                                six_months.append(indice)
+                            else:
+                                pass
+                        if(len(six_months)>0):
+                            delinquencyString = delinquencyString[six_months[0]:(six_months[-1]+2)]
+                            delinquenciesCount = (delinquencyString.count("+")+delinquencyString.count("CLSD")+delinquencyString.count("WOF")+delinquencyString.count("RCV"))
             else:
-                delinquencyString = text[(delinquenciesIndex+len("Account Status:Asset Classification:Suit Filed Status:")+4):(text.find("Acct # :"))]
-        # print(delinquencyString)
-        # Get all index of string "-22" is present in the delinquency string
-                index = [m.start() for m in re.finditer(month_year_regex,delinquencyString)]
-                if(len(index)>0):
-                    for indice in index:
-                        month_string = delinquencyString[indice:indice+5]
-                        try:
-                            input_month = datetime.datetime.strptime(month_string, "%m-%y")
-                        except ValueError:
-                            pass
-                        if(diff_month(today_date,input_month)<=7):
-                            print(input_month)
-                            six_months.append(indice)
-                        else:
-                            pass
-                    if(len(six_months)>0):
-                        delinquencyString = delinquencyString[six_months[0]:(six_months[-1]+2)]
-                        delinquenciesCount = (delinquencyString.count("+")+delinquencyString.count("CLSD")+delinquencyString.count("WOF")+delinquencyString.count("RCV"))
+                if(text[delinquenciesIndex+1].strip() == "H"):
+                    delinquencyString = text[(delinquenciesIndex+len("HistoryAccount Status:Asset Classification:Suit Filed Status:")+4):(text.find("Acct # :"))]
+                    # print(delinquencyString)
+                    # Get all index of string "-22" is present in the delinquency string
+                    index = [m.start() for m in re.finditer(month_year_regex,delinquencyString)]
+                    if(len(index)>0):
+                        for indice in index:
+                            month_string = delinquencyString[indice:indice+5]
+                            try:
+                                input_month = datetime.datetime.strptime(month_string, "%m-%y")
+                            except ValueError:
+                                pass
+                            if(diff_month(today_date,input_month)<=7):
+                                print(input_month)
+                                six_months.append(indice)
+                            else:
+                                pass
+                        if(len(six_months)>0):
+                            delinquencyString = delinquencyString[six_months[0]:(six_months[-1]+2)]
+                            delinquenciesCount = (delinquencyString.count("+")+delinquencyString.count("CLSD")+delinquencyString.count("WOF")+delinquencyString.count("RCV"))
+                else:
+                    delinquencyString = text[(delinquenciesIndex+len("Account Status:Asset Classification:Suit Filed Status:")+4):(text.find("Acct # :"))]
+            # print(delinquencyString)
+            # Get all index of string "-22" is present in the delinquency string
+                    index = [m.start() for m in re.finditer(month_year_regex,delinquencyString)]
+                    if(len(index)>0):
+                        for indice in index:
+                            month_string = delinquencyString[indice:indice+5]
+                            try:
+                                input_month = datetime.datetime.strptime(month_string, "%m-%y")
+                            except ValueError:
+                                pass
+                            if(diff_month(today_date,input_month)<=7):
+                                print(input_month)
+                                six_months.append(indice)
+                            else:
+                                pass
+                        if(len(six_months)>0):
+                            delinquencyString = delinquencyString[six_months[0]:(six_months[-1]+2)]
+                            delinquenciesCount = (delinquencyString.count("+")+delinquencyString.count("CLSD")+delinquencyString.count("WOF")+delinquencyString.count("RCV"))
 
 
             '''OPEN'''
@@ -520,7 +566,7 @@ def mainPY(sal,fp):
         return completeDF
 
     folder_loc = fp
-    # folder_loc = "C:/Users/Krisha/Desktop/E_Revbay/CAR/Automated/html_python/myProject/test"
+    # folder_loc = "/Users/nilaygaitonde/Downloads"
     # Create a list of all files in the folder
     files = os.listdir(folder_loc)
     # Create a list of all files with .pdf extension
@@ -540,6 +586,7 @@ def mainPY(sal,fp):
         nameValue = complete_String[nameIndex:(complete_String.find("Personal Information"))].strip().capitalize()
         # salary = int(input(f"Enter salary for {nameValue}:"))
         salary = int(sal)
+        # salary = 20000
         finalDF = create_loan(complete_String)
         data_df = pd.DataFrame.from_dict(finalDF)
         data_df['open'] = data_df['open'].map({
@@ -620,7 +667,6 @@ def mainPY(sal,fp):
             rec_df = pd.DataFrame()
 
         save_as_csv(pivot_df= pivot_df,filename=nameValue,data_df=show_df,csv=False,info_df=pd.DataFrame(info_df),rec_df=rec_df,case_df = case_df,filePath=folder_loc,disposable = disposable)
-
 # A decorator used to tell the application
 # which URL is associated function
 
