@@ -57,7 +57,7 @@ def index():
             
 
 @app.route('/logout')
-def logout():
+def lgout():
     session.pop('user')
     return redirect('/')
 
