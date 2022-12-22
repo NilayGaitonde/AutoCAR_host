@@ -15,14 +15,24 @@
       </div>
 
       <div class="content">
-        <h2>LOGIN</h2>
+        <div class="bn"></div>
 
-        {% if un %}
-
-        <div style="color: red; font-size: medium; font-weight: 600; margin-bottom: 20px;">{{un}}</div>
-
-        {% endif %}
         <form action="/" method="post">
+          <h2>LOGIN</h2>
+          {% if un %}
+
+          <div
+            style="
+              color: red;
+              font-size: medium;
+              font-weight: 600;
+              margin-bottom: 20px;
+            "
+          >
+            {{un}}
+          </div>
+
+          {% endif %}
           <div class="inputbox">
             <span>Email</span>
             <br />

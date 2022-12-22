@@ -65,7 +65,7 @@
     outline: none; 
     border-radius: 20px; 
     padding: 5px;
-    width: 50%;
+    width: 80%;
   }
   .content input[type="text"]{
     border: 2px solid #c21313e3;   
@@ -87,9 +87,42 @@
     font-weight: 500;
     cursor: pointer;
     border-radius: 20px;
+    text-align: center;
   }
 
 
   .content input[type="submit"]:hover {
     background: #ac2222e3;
   }
+
+
+  #cf{
+    margin-top: 20px;
+  }
+
+  #mybttn{
+    background: #c21313e3;
+    color: #fff;
+    outline: none;
+    border: none;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    font-size: medium;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 20px;
+  }
+
+#forg{
+  text-decoration: none;
+  color: #c21313e3;
+  align-self: end;
+  margin-right: 25%;
+}
+
+.bn{
+  /* display: inline; */
+  text-align: left;
+}

@@ -19,8 +19,13 @@
       <input title="salary" type="number" name="csalary" />
       <br />
       <br />
-      <label for="salary">Enter FilePath:</label>
-      <input title="filepath" type="text" name="cfilepath" />
+      <label for="salary">Enter Folder Path:</label>
+      <input title="filepath" type="text" name="cfilepath" style="width: 60%;"/>
+<br><br>
+
+      <label for="fileName" >Select Equifax Report:</label>
+      <input type="file" id="mybttn" onchange="updateFilename(this.value)"/>
+      <input type="text" id="filename" name="cName"style="opacity:0;"/>
 
       <!-- <input id="fileselector" type="file" onchange="browseResult(event)" webkitdirectory directory multiple="false" style="display:none" />
 <button onclick="getElementById('fileselector').click()">Browse</button> -->
@@ -30,13 +35,28 @@
       <button type="submit">SUBMIT</button>
     </form>
   </body>
-  <!-- <script>
-    function browseResult(e){
-  var fileselector = document.getElementById('fileselector');
-  console.log(fileselector.value);
-  
+<script>
+  function extractFilename(path) {
+  if (path.substr(0, 12) == "C:\\fakepath\\")
+    return path.substr(12); // modern browser
+  var x;
+  x = path.lastIndexOf('/');
+  if (x >= 0) // Unix-based path
+    return path.substr(x+1);
+  x = path.lastIndexOf('\\');
+  if (x >= 0) // Windows-based path
+    return path.substr(x+1);
+  return path; // just the filename
 }
-    </script> -->
+        function updateFilename(path) {
+            console.log(path);
+            var file_name=extractFilename(path);
+            console.log(file_name);
+          document.getElementById('filename').value = file_name;
+        }
+  
+
+</script>
 
     <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script type=text/javascript>

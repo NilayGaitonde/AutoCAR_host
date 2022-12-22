@@ -36,8 +36,9 @@ auth = firebase.auth()
 
 app.secret_key = "hmmm"
 
+
 @app.route('/', methods=['POST', 'GET'])
-def index():
+def lg():
     if('user' in session):
         return redirect('/form')
     if request.method == 'POST':
@@ -50,10 +51,10 @@ def index():
             return redirect('/form')
 
         except:
-            return render_template('index.html', un = "Error Please Check Your Credentials")
+            return render_template('login.html', un = "Error Please Check Your Credentials")
             
 
-    return render_template('index.html')
+    return render_template('login.html')
             
 
 @app.route('/logout')
@@ -68,7 +69,7 @@ def gfg():
         salary = request.form.get("csalary")
         # f = request.files['file']
         filepath=request.form.get("cfilepath")
-
+        filename=request.form.get("cName")
         return "Your salary is "+ salary
 
         # first_name = request.form.get("fname")
@@ -81,19 +82,19 @@ def gfg():
 @app.route('/success', methods = ['POST'])  
 def success():  
     if request.method == 'POST':  
-        # f = request.files['file']
-        # f.save(f.filename)  
+        
         salaryN = request.form.get("csalary")
         filepath=request.form.get("cfilepath")
-        # folder_loc = input("Enter folder location:")
-        mainPY(salaryN,filepath)
-    return render_template("success.html", name = filepath, sal=salaryN)  
+        filename=request.form.get("cName")
+
+        mainPY(salaryN,filepath,filename)
+    return render_template("success.html", name = filepath, sal=salaryN,fileN=filename)  
 
 #  Flask constructor
-def mainPY(sal,fp):
+def mainPY(sal,fp,fn):
     global recommendation_string
     recommendation_string=""
-
+    
     def rename_products(df:pd.DataFrame):
         df = df.reset_index()
         df['Products'] = df['Products'].map({
@@ -108,7 +109,7 @@ def mainPY(sal,fp):
         df = df.set_index('Products')
         return df
 
-# Get's index of the word, essentially it gets the first index + the lenght so you have the last index of the phrase
+    # Get's index of the word, essentially it gets the first index + the lenght so you have the last index of the phrase
     def get_index(firstIndex:int,string:str):
         return int(firstIndex)+int(len(string))
 
@@ -466,7 +467,7 @@ def mainPY(sal,fp):
                     index = [m.start() for m in re.finditer(month_year_regex,delinquencyString)]
                     if(len(index)>0):
                         for indice in index:
-                            month_string = delinquencyString[indice:indice+5]
+                            month_string = delinquencyString[indice[0]:indice+5]
                             try:
                                 input_month = datetime.datetime.strptime(month_string, "%m-%y")
                             except ValueError:
@@ -479,7 +480,7 @@ def mainPY(sal,fp):
                         if(len(six_months)>0):
                             delinquencyString = delinquencyString[six_months[0]:(six_months[-1]+2)]
                             delinquenciesCount = (delinquencyString.count("+")+delinquencyString.count("CLSD")+delinquencyString.count("WOF")+delinquencyString.count("RCV"))
-
+            print(delinquencyString)
 
             '''OPEN'''
                 
@@ -566,107 +567,106 @@ def mainPY(sal,fp):
         return completeDF
 
     folder_loc = fp
+    print(folder_loc)
     # folder_loc = "/Users/nilaygaitonde/Downloads"
     # Create a list of all files in the folder
-    files = os.listdir(folder_loc)
     # Create a list of all files with .pdf extension
-    pdf_files = [f for f in files if f.endswith('.pdf')]
-    for file in pdf_files:
-        pdfFileObj = open(folder_loc+"/"+file, 'rb')
-        complete_String = ""
-        pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-        for i in range(pdfReader.numPages):
-            pageObj = pdfReader.getPage(i).extract_text()
-            complete_String += pageObj
-        '''RISK SCORE'''
-        riskIndex = get_index(complete_String.find("Equifax Risk Score 3.1 "), "Equifax Risk Score 3.1 ")
-        riskValue = int(complete_String[riskIndex:(complete_String.find("1. "))].strip())
-        '''NAME VALUE'''
-        nameIndex = get_index(complete_String.find("Consumer Name: "),"Consumer Name: ")
-        nameValue = complete_String[nameIndex:(complete_String.find("Personal Information"))].strip().capitalize()
-        # salary = int(input(f"Enter salary for {nameValue}:"))
-        salary = int(sal)
-        # salary = 20000
-        finalDF = create_loan(complete_String)
-        data_df = pd.DataFrame.from_dict(finalDF)
-        data_df['open'] = data_df['open'].map({
-            'Yes': True,
-            'No': False
-        })
-        '''DROP CLOSED PRODUCTS'''
-        data_df = data_df.loc[data_df['open']>0]
-        # drop row where balance is 0 and Delinquencies is true and emi is 0
-        data_df = data_df.loc[(data_df['Balance']!=0) | (data_df['Delinquencies']>0)]
-        # emi == 0
-        data_df['Paid Principle'] = data_df['Paid Principle'].apply(lambda x: 0 if x<0 else x)
-        '''FIND FOIR,disposable'''
-        if(salary <= 50000):
-            FOIR = salary*0.5
-        elif(salary > 50000 and salary <= 150000):
-            FOIR = salary*0.6
+    file=fp+"/"+fn
+    pdfFileObj = open(file, 'rb')
+    complete_String = ""
+    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+    for i in range(pdfReader.numPages):
+        pageObj = pdfReader.getPage(i).extract_text()
+        complete_String += pageObj
+    '''RISK SCORE'''
+    riskIndex = get_index(complete_String.find("Equifax Risk Score 3.1 "), "Equifax Risk Score 3.1 ")
+    riskValue = int(complete_String[riskIndex:(complete_String.find("1. "))].strip())
+    '''NAME VALUE'''
+    nameIndex = get_index(complete_String.find("Consumer Name: "),"Consumer Name: ")
+    nameValue = complete_String[nameIndex:(complete_String.find("Personal Information"))].strip().capitalize()
+    salary = int(input(f"Enter salary for {nameValue}:"))
+    # salary = 20000
+    finalDF = create_loan(complete_String)
+    data_df = pd.DataFrame.from_dict(finalDF)
+    data_df['open'] = data_df['open'].map({
+        'Yes': True,
+        'No': False
+    })
+    '''DROP CLOSED PRODUCTS'''
+    data_df = data_df.loc[data_df['open']>0]
+    # drop row where balance is 0 and Delinquencies is true and emi is 0
+    data_df = data_df.loc[(data_df['Balance']!=0) | (data_df['Delinquencies']>0)]
+    # emi == 0
+    data_df['Paid Principle'] = data_df['Paid Principle'].apply(lambda x: 0 if x<0 else x)
+    '''FIND FOIR,disposable'''
+    if(salary <= 50000):
+        FOIR = salary*0.5
+    elif(salary > 50000 and salary <= 150000):
+        FOIR = salary*0.6
+    else:
+        FOIR = salary*0.7
+    delinquency = data_df['Delinquencies'].sum()
+    disposable = FOIR - data_df['EMI'].sum()
+    data_df.drop(['open'],axis=1,inplace=True)
+    show_df = data_df.copy()
+    data_df['Products'] = data_df['Products'].map({
+        'Credit Card': '1_CreditCard',
+        'Business Loan':'2_BusinessLoan',
+        'Personal Loan':'3_PersonalLoan',
+        'Auto Loan':'5_AutoLoan',
+        'Housing Loan':'6_HousingLoan',
+    })
+    data_df['Products'] = data_df['Products'].fillna('4_Others')
+    data_df.sort_values(by=['Products'],ascending=True,inplace=True)
+    # create a total dictionary
+    total_dict = {
+        'Products': 'Total',
+        'Balance': data_df['Balance'].sum(),
+        'EMI': data_df['EMI'].sum(),
+        'Paid Principle': data_df['Paid Principle'].sum(),
+        'Sanction/Credit Limit': data_df['Sanction/Credit Limit'].sum(),
+        'Delinquencies': delinquency,
+        'Foir': int(FOIR),
+        'Disposable': int(disposable),
+        "salary": salary
+    }
+    total_dict = pd.DataFrame(total_dict,index=[0])
+    data_df = pd.concat([data_df,total_dict],ignore_index=False)
+    show_df = pd.concat([show_df,total_dict],ignore_index=False)
+    pivot_df = pd.pivot_table(data_df,index = ["Products"], values=['Sanction/Credit Limit','Balance','EMI','Paid Principle','Delinquencies'], aggfunc=np.sum, fill_value=0)
+    pivot_df['FOIR'] = FOIR
+    pivot_df['Disposable'] = disposable
+    info_df = {
+        "Name":[nameValue],
+        "Credit Score":[riskValue],
+        "Salary":[salary],
+    }
+    pivot_df = pivot_df[['Sanction/Credit Limit','Balance','EMI','Paid Principle','Delinquencies','FOIR','Disposable']]
+    # RECOMMENDATIONS
+    new_df = data_df.copy()
+    recommendation_string = ""
+    if(info_df['Credit Score'][0]>0):
+        new_pl=0
+        if(disposable>0):
+            new_pl = int(get_new_PL(disposable))
         else:
-            FOIR = salary*0.7
-        delinquency = data_df['Delinquencies'].sum()
-        disposable = FOIR - data_df['EMI'].sum()
-        data_df.drop(['open'],axis=1,inplace=True)
-        show_df = data_df.copy()
-        data_df['Products'] = data_df['Products'].map({
-            'Credit Card': '1_CreditCard',
-            'Business Loan':'2_BusinessLoan',
-            'Personal Loan':'3_PersonalLoan',
-            'Auto Loan':'5_AutoLoan',
-            'Housing Loan':'6_HousingLoan',
-        })
-        data_df['Products'] = data_df['Products'].fillna('4_Others')
-        data_df.sort_values(by=['Products'],ascending=True,inplace=True)
-        # create a total dictionary
-        total_dict = {
-            'Products': 'Total',
-            'Balance': data_df['Balance'].sum(),
-            'EMI': data_df['EMI'].sum(),
-            'Paid Principle': data_df['Paid Principle'].sum(),
-            'Sanction/Credit Limit': data_df['Sanction/Credit Limit'].sum(),
-            'Delinquencies': delinquency,
-            'Foir': int(FOIR),
-            'Disposable': int(disposable),
-            "salary": salary
-        }
-        total_dict = pd.DataFrame(total_dict,index=[0])
-        data_df = pd.concat([data_df,total_dict],ignore_index=False)
-        show_df = pd.concat([show_df,total_dict],ignore_index=False)
-        pivot_df = pd.pivot_table(data_df,index = ["Products"], values=['Sanction/Credit Limit','Balance','EMI','Paid Principle','Delinquencies'], aggfunc=np.sum, fill_value=0)
-        pivot_df['FOIR'] = FOIR
-        pivot_df['Disposable'] = disposable
-        info_df = {
-            "Name":[nameValue],
-            "Credit Score":[riskValue],
-            "Salary":[salary],
-        }
-        pivot_df = pivot_df[['Sanction/Credit Limit','Balance','EMI','Paid Principle','Delinquencies','FOIR','Disposable']]
-        # RECOMMENDATIONS
-        new_df = data_df.copy()
-        recommendation_string = ""
-        if(info_df['Credit Score'][0]>0):
-            new_pl=0
-            if(disposable>0):
-                new_pl = int(get_new_PL(disposable))
-            else:
-                recommendation_string+="You are not eligible for a new Personal Loan. "
-            info_df = pd.DataFrame(info_df)
-            if(delinquency > 0):
-                recommend_delinquency(pivot_df)
-                case_df = pd.DataFrame({"Conclusion":[recommendation_string]})
-                rec_df = pd.DataFrame()
-            else:
-                case_df = get_top_up(new_df=new_df,new_pl=new_pl)
-                case_df = pd.DataFrame(case_df)
-                rec_df = pd.DataFrame({"Conclusion":[recommendation_string]})
-        else:
-            recommendation_string+="Your credit score is low."
+            recommendation_string+="You are not eligible for a new Personal Loan. "
+        info_df = pd.DataFrame(info_df)
+        if(delinquency > 0):
+            recommend_delinquency(pivot_df)
             case_df = pd.DataFrame({"Conclusion":[recommendation_string]})
             rec_df = pd.DataFrame()
+        else:
+            case_df = get_top_up(new_df=new_df,new_pl=new_pl)
+            case_df = pd.DataFrame(case_df)
+            rec_df = pd.DataFrame({"Conclusion":[recommendation_string]})
+    else:
+        recommendation_string+="Your credit score is low."
+        case_df = pd.DataFrame({"Conclusion":[recommendation_string]})
+        rec_df = pd.DataFrame()
 
-        save_as_csv(pivot_df= pivot_df,filename=nameValue,data_df=show_df,csv=False,info_df=pd.DataFrame(info_df),rec_df=rec_df,case_df = case_df,filePath=folder_loc,disposable = disposable)
+    save_as_csv(pivot_df= pivot_df,filename=nameValue,data_df=show_df,csv=False,info_df=pd.DataFrame(info_df),rec_df=rec_df,case_df = case_df,filePath=folder_loc,disposable = disposable)
+    
 # A decorator used to tell the application
 # which URL is associated function
 
