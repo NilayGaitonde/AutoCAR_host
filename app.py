@@ -584,7 +584,7 @@ def mainPY(sal,fp,fn):
     '''NAME VALUE'''
     nameIndex = get_index(complete_String.find("Consumer Name: "),"Consumer Name: ")
     nameValue = complete_String[nameIndex:(complete_String.find("Personal Information"))].strip().capitalize()
-    salary = int(input(f"Enter salary for {nameValue}:"))
+    salary = int(sal)
     # salary = 20000
     finalDF = create_loan(complete_String)
     data_df = pd.DataFrame.from_dict(finalDF)
