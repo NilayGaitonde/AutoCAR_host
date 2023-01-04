@@ -467,7 +467,7 @@ def mainPY(sal,fp,fn):
                     index = [m.start() for m in re.finditer(month_year_regex,delinquencyString)]
                     if(len(index)>0):
                         for indice in index:
-                            month_string = delinquencyString[indice[0]:indice+5]
+                            month_string = delinquencyString[indice:indice+5]
                             try:
                                 input_month = datetime.datetime.strptime(month_string, "%m-%y")
                             except ValueError:
