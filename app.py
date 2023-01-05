@@ -1,6 +1,6 @@
 # importing Flask and other modules
 from flask import Flask, session, render_template, request, redirect
-import pyrebase
+from pyrebase import pyrebase
 
 
 from distutils.log import debug
